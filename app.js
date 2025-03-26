@@ -19,10 +19,15 @@ app.get('/', (req, res) => {
 // API endpoint to fetch and modify content
 app.post('/fetch', async (req, res) => {
   try {
-    const { url } = req.body;
+    let { url } = req.body;
     
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
+    }
+
+    // Add http:// if no protocol is specified
+    if (!url.match(/^[a-zA-Z]+:\/\//)) {
+      url = 'http://' + url;
     }
 
     // Fetch the content from the provided URL
