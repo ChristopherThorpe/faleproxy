@@ -2,6 +2,11 @@
 
 A Node.js web application that fetches a URL, replaces every instance of "Yale" with "Fale" in the document, and displays the modified content.
 
+## Submission notes
+
+- This took me approximately 2 hours to complete
+- I 
+
 ## Features
 
 - Simple and intuitive user interface
@@ -9,6 +14,8 @@ A Node.js web application that fetches a URL, replaces every instance of "Yale" 
 - Replaces all instances of "Yale" with "Fale" (case-insensitive)
 - Displays the modified content in an iframe
 - Shows original URL and page title in an info bar
+- Allows users to enter a link without the protocol (e.g., yale.edu)
+- Handles relative links and navigation within the application
 
 ## Installation
 
@@ -47,6 +54,62 @@ The application includes a comprehensive test suite:
 - **Unit tests**: Test the Yale-to-Fale replacement logic
 - **API tests**: Test the application endpoints
 - **Integration tests**: Test the entire application workflow
+- **URL Handling tests**: Verify automatic addition of HTTP protocol to URLs
+- **Navigation tests**: Ensure proper handling of relative and absolute URLs when navigating
+- **URL API tests**: Validate API behavior with different URL formats
+
+## Deployment to Vercel
+
+This application is configured for deployment to Vercel's serverless environment:
+
+1. **Push your code to GitHub**
+
+2. **Connect to Vercel**:
+   - Sign in to [Vercel](https://vercel.com)
+   - Click "New Project"
+   - Import your GitHub repository
+   - Select the repository and click "Import"
+
+3. **Configure the project**:
+   - The default settings will work automatically due to the `vercel.json` configuration
+   - No environment variables are required for basic functionality
+
+4. **Deploy**:
+   - Click "Deploy"
+   - Vercel will build and deploy your application
+
+5. **Access your deployed application**:
+   - Once deployment is complete, you can access your application at the provided Vercel URL
+
+### Important Code Structure
+
+The application has been structured to work in both local and serverless environments:
+
+- **Function Exports**: The `ensureHttpProtocol` function is exported as a property of the app object
+- **Resource Paths**: All resource paths use absolute URLs (starting with `/`)
+- **Error Handling**: Comprehensive error handling for all API endpoints
+
+### Troubleshooting Vercel Deployment
+
+If you encounter issues with your Vercel deployment:
+
+1. **Check the Build Logs** in the Vercel dashboard for any errors
+2. **Verify Static Assets** are being served correctly by checking network requests
+3. **Check Browser Console** for any JavaScript errors
+4. **Test API Endpoints** directly to isolate any issues
+
+### Test Files
+
+The application includes the following test files:
+
+- **`tests/unit.test.js`**: Tests the core text replacement functionality
+- **`tests/api.test.js`**: Tests the main API endpoint functionality
+- **`tests/integration.test.js`**: Tests the complete application flow with mocked responses
+- **`tests/url-handling.test.js`**: Tests the automatic HTTP protocol addition to URLs
+- **`tests/navigation.test.js`**: Tests URL resolution for both relative and absolute paths
+- **`tests/url-api.test.js`**: Tests API handling of different URL formats and edge cases
+
+The tests use Jest as the testing framework and include mocks for external dependencies to avoid making actual HTTP requests during testing.
 
 ### Running Tests
 

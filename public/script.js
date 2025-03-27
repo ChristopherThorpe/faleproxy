@@ -11,11 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
     urlForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const url = urlInput.value.trim();
+        let url = urlInput.value.trim();
         
         if (!url) {
             showError('Please enter a valid URL');
             return;
+        }
+        
+        // Ensure URL has http:// prefix if not already present
+        if (!/^https?:\/\//i.test(url)) {
+            url = `http://${url}`;
         }
         
         // Show loading indicator
@@ -43,6 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
             originalUrlElement.href = url;
             pageTitleElement.textContent = data.title || 'No title';
             
+            // Store the base URL for resolving relative links
+            const baseUrl = new URL(url).origin;
+            
             // Create a sandboxed iframe to display the content
             const iframe = document.createElement('iframe');
             iframe.sandbox = 'allow-same-origin allow-scripts';
@@ -59,11 +67,49 @@ document.addEventListener('DOMContentLoaded', () => {
             iframe.onload = function() {
                 iframe.style.height = iframeDocument.body.scrollHeight + 'px';
                 
-                // Make sure links open in a new tab
+                // Intercept link clicks to handle them within our application
                 const links = iframeDocument.querySelectorAll('a');
                 links.forEach(link => {
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
+                    // Only modify links with href attributes
+                    if (link.href) {
+                        // Remove existing click handlers
+                        link.removeAttribute('onclick');
+                        
+                        // Add our custom click handler
+                        link.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            
+                            // Get the link URL and resolve it properly
+                            let linkUrl = this.getAttribute('href');
+                            
+                            // Handle relative URLs
+                            if (linkUrl && !linkUrl.match(/^https?:\/\//i)) {
+                                // Handle different types of relative URLs
+                                if (linkUrl.startsWith('/')) {
+                                    // Absolute path relative to domain
+                                    linkUrl = baseUrl + linkUrl;
+                                } else if (linkUrl.startsWith('#')) {
+                                    // Fragment identifier - stay on same page
+                                    return;
+                                } else {
+                                    // Relative path - resolve against current URL
+                                    const currentPath = new URL(url).pathname;
+                                    const currentDir = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+                                    linkUrl = baseUrl + currentDir + linkUrl;
+                                }
+                            }
+                            
+                            // Update the URL input field
+                            urlInput.value = linkUrl;
+                            
+                            // Trigger the form submission to load the new page
+                            urlForm.dispatchEvent(new Event('submit'));
+                        });
+                        
+                        // Remove target and rel attributes to prevent opening in new tab
+                        link.removeAttribute('target');
+                        link.removeAttribute('rel');
+                    }
                 });
             };
             
