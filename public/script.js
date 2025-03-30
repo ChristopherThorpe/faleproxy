@@ -11,9 +11,24 @@ document.addEventListener('DOMContentLoaded', () => {
     urlForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const url = urlInput.value.trim();
-        
+        let url = urlInput.value.trim().toLowerCase();
         if (!url) {
+            showError('Please enter a valid URL');
+            return;``
+        }
+
+        if (!url.includes('https://') && !url.includes('http://')) {
+            url = 'https://' + url;
+        }
+
+        try {
+            let urlObj = new URL(url);
+            const hostname = urlObj.hostname;
+            if (!hostname.includes('.')) {
+                showError('Please enter a complete URL (e.g., example.com)');
+                return;
+            }
+        } catch (e) {
             showError('Please enter a valid URL');
             return;
         }
