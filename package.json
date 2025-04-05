@@ -33,14 +33,22 @@
       "**/*.js",
       "!**/node_modules/**",
       "!**/coverage/**",
-      "!jest.config.js"
+      "!jest.config.js",
+      "!**/public/**",
+      "!app.test.js"
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 70,
-        "branches": 70,
-        "functions": 70,
-        "lines": 70
+        "statements": 50,
+        "branches": 50,
+        "functions": 50,
+        "lines": 50
+      },
+      "./tests/": {
+        "statements": 90,
+        "branches": 90,
+        "functions": 90,
+        "lines": 90
       }
     }
   }

@@ -7,6 +7,7 @@ const { sampleHtmlWithYale } = require('./test-utils');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 // Set a different port for testing to avoid conflict with the main app
 const TEST_PORT = 3099;
@@ -30,7 +31,14 @@ describe('Integration Tests', () => {
     
     // Create a temporary test app file
     await execAsync('cp app.js app.test.js');
-    await execAsync(`sed -i '' 's/const PORT = 3001/const PORT = ${TEST_PORT}/' app.test.js`);
+    
+    // Use different sed syntax based on platform (macOS vs Linux)
+    const isMac = os.platform() === 'darwin';
+    const sedCommand = isMac 
+      ? `sed -i '' 's/const PORT = 3001/const PORT = ${TEST_PORT}/' app.test.js`
+      : `sed -i 's/const PORT = 3001/const PORT = ${TEST_PORT}/' app.test.js`;
+    
+    await execAsync(sedCommand);
     
     // Start the test server
     server = require('child_process').spawn('node', ['app.test.js'], {
