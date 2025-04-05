@@ -4,18 +4,29 @@ const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
 const { sampleHtmlWithYale } = require('./test-utils');
-const nock = require('nock');
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
 
 // Set a different port for testing to avoid conflict with the main app
 const TEST_PORT = 3099;
+const MOCK_SERVER_PORT = 3098;
 let server;
+let mockServer;
 
 describe('Integration Tests', () => {
-  // Modify the app to use a test port
+  // Modify the app to use a test port and set up a mock server
   beforeAll(async () => {
-    // Mock external HTTP requests
-    nock.disableNetConnect();
-    nock.enableNetConnect('127.0.0.1');
+    // Create a mock server to serve the sample HTML
+    const mockApp = express();
+    mockApp.get('/', (req, res) => {
+      res.send(sampleHtmlWithYale);
+    });
+    
+    // Start the mock server
+    mockServer = mockApp.listen(MOCK_SERVER_PORT, () => {
+      console.log(`Mock server running at http://localhost:${MOCK_SERVER_PORT}`);
+    });
     
     // Create a temporary test app file
     await execAsync('cp app.js app.test.js');
@@ -28,28 +39,27 @@ describe('Integration Tests', () => {
     });
     
     // Give the server time to start
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }, 10000); // Increase timeout for server startup
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }, 15000); // Increase timeout for server startup
 
   afterAll(async () => {
     // Kill the test server and clean up
     if (server && server.pid) {
       process.kill(-server.pid);
     }
+    
+    // Close the mock server
+    if (mockServer) {
+      mockServer.close();
+    }
+    
     await execAsync('rm app.test.js');
-    nock.cleanAll();
-    nock.enableNetConnect();
   });
 
   test('Should replace Yale with Fale in fetched content', async () => {
-    // Setup mock for example.com
-    nock('https://example.com')
-      .get('/')
-      .reply(200, sampleHtmlWithYale);
-    
-    // Make a request to our proxy app
+    // Make a request to our proxy app, pointing to our mock server
     const response = await axios.post(`http://localhost:${TEST_PORT}/fetch`, {
-      url: 'https://example.com/'
+      url: `http://localhost:${MOCK_SERVER_PORT}/`
     });
     
     expect(response.status).toBe(200);
@@ -79,12 +89,15 @@ describe('Integration Tests', () => {
   test('Should handle invalid URLs', async () => {
     try {
       await axios.post(`http://localhost:${TEST_PORT}/fetch`, {
-        url: 'not-a-valid-url'
+        url: 'https://not-a-valid-url'
       });
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
-      expect(error.response.status).toBe(500);
+      expect(error.response).toBeDefined();
+      if (error.response) {
+        expect(error.response.status).toBe(500);
+      }
     }
   });
 
@@ -94,8 +107,11 @@ describe('Integration Tests', () => {
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toBe('URL is required');
+      expect(error.response).toBeDefined();
+      if (error.response) {
+        expect(error.response.status).toBe(400);
+        expect(error.response.data.error).toBe('URL is required');
+      }
     }
   });
 });

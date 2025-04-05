@@ -26,7 +26,13 @@ app.post('/fetch', async (req, res) => {
     }
 
     // Fetch the content from the provided URL
-    const response = await axios.get(url);
+    const response = await axios.get(url, {
+      // Add headers to ensure nock properly intercepts the request
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'User-Agent': 'axios/0.21.1'
+      }
+    });
     const html = response.data;
 
     // Use cheerio to parse HTML and selectively replace text content, not URLs
@@ -53,14 +59,14 @@ app.post('/fetch', async (req, res) => {
     }).each(function() {
       // Replace text content but not in URLs or attributes
       const text = $(this).text();
-      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+      const newText = text.replace(/Yale/gi, 'Fale');
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
     });
     
     // Process title separately
-    const title = $('title').text().replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+    const title = $('title').text().replace(/Yale/gi, 'Fale');
     $('title').text(title);
     
     return res.json({ 
