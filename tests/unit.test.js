@@ -1,5 +1,6 @@
 const cheerio = require('cheerio');
 const { sampleHtmlWithYale } = require('./test-utils');
+const app = require('../app');
 
 describe('Yale to Fale replacement logic', () => {
   
@@ -12,15 +13,15 @@ describe('Yale to Fale replacement logic', () => {
     }).each(function() {
       // Replace text content but not in URLs or attributes
       const text = $(this).text();
-      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+      const newText = app.replaceYaleWithFale(text);
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
     });
     
     // Process title separately
-    const title = $('title').text().replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
-    $('title').text(title);
+    const title = $('title').text();
+    $('title').text(app.replaceYaleWithFale(title));
     
     const modifiedHtml = $.html();
     
@@ -64,12 +65,12 @@ describe('Yale to Fale replacement logic', () => {
     
     const $ = cheerio.load(htmlWithoutYale);
     
-    // Apply the same replacement logic
+    // Apply the same replacement logic using the app function
     $('body *').contents().filter(function() {
       return this.nodeType === 3;
     }).each(function() {
       const text = $(this).text();
-      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+      const newText = app.replaceYaleWithFale(text);
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
@@ -94,13 +95,13 @@ describe('Yale to Fale replacement logic', () => {
       return this.nodeType === 3;
     }).each(function() {
       const text = $(this).text();
-      const newText = text.replace(/Yale/gi, 'Fale');
+      const newText = app.replaceYaleWithFale(text);
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
     });
     
-    const modifiedHtml = $.html();
+    const modifiedHtml = $("p").html();
     
     expect(modifiedHtml).toContain('FALE University, Fale College, and fale medical school');
   });

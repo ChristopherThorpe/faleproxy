@@ -13,8 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const url = urlInput.value.trim();
         
+        // Basic URL validation
         if (!url) {
-            showError('Please enter a valid URL');
+            showError('Please enter a URL');
             return;
         }
         
@@ -39,8 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Update the info bar
-            originalUrlElement.textContent = url;
-            originalUrlElement.href = url;
+            originalUrlElement.textContent = data.url;
+            originalUrlElement.href = data.url;
             pageTitleElement.textContent = data.title || 'No title';
             
             // Create a sandboxed iframe to display the content
