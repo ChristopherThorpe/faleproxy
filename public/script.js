@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentDisplay = document.getElementById('content-display');
     const originalUrlElement = document.getElementById('original-url');
     const pageTitleElement = document.getElementById('page-title');
+    const replacementCountElement = document.getElementById('replacement-count');
 
     urlForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let url = urlInput.value.trim().toLowerCase();
         if (!url) {
             showError('Please enter a valid URL');
-            return;``
+            return;
         }
 
         if (!url.includes('https://') && !url.includes('http://')) {
@@ -57,6 +58,25 @@ document.addEventListener('DOMContentLoaded', () => {
             originalUrlElement.textContent = url;
             originalUrlElement.href = url;
             pageTitleElement.textContent = data.title || 'No title';
+            
+            // Update replacement count with animation
+            const count = data.replacementCount || 0;
+            replacementCountElement.textContent = '0';
+            
+            // Simple animation to count up to the final number
+            if (count > 0) {
+                const duration = 1000; // 1 second animation
+                const steps = 20; 
+                const increment = Math.max(1, Math.ceil(count / steps));
+                let current = 0;
+                const interval = setInterval(() => {
+                    current = Math.min(current + increment, count);
+                    replacementCountElement.textContent = current;
+                    if (current >= count) {
+                        clearInterval(interval);
+                    }
+                }, duration / steps);
+            }
             
             // Create a sandboxed iframe to display the content
             const iframe = document.createElement('iframe');

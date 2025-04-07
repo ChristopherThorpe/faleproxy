@@ -106,6 +106,19 @@ main {
     margin: 5px 0;
 }
 
+.highlight {
+    font-weight: bold;
+    color: #1e3a8a;
+    font-size: 1.1em;
+    transition: all 0.3s ease;
+}
+
+#replacement-count {
+    display: inline-block;
+    min-width: 2rem;
+    text-align: center;
+}
+
 #content-display {
     background-color: white;
     padding: 1.5rem;
