@@ -18,31 +18,64 @@ describe('Integration Tests', () => {
     // Allow localhost connections for our test server
     nock.enableNetConnect(/(localhost|127\.0\.0\.1):\d+/);
     
-    // Create a temporary test app file
-    await execAsync('cp app.js app.test.js');
-    await execAsync(`sed -i '' 's/const PORT = 3001/const PORT = ${TEST_PORT}/' app.test.js`);
-    
-    // Start the test server
-    server = require('child_process').spawn('node', ['app.test.js'], {
-      detached: true,
-      stdio: 'ignore'
-    });
-    
-    // Give the server time to start
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Reset and define all nock mocks
-    nock.cleanAll();
+    // Create a temporary test app file and modify it to use our test port
+    try {
+      // Create a copy of the app.js file
+      await execAsync('cp app.js app.test.js');
+      
+      // Read the content of the file
+      const { stdout: fileContent } = await execAsync('cat app.test.js');
+      
+      // Replace the port value
+      const modifiedContent = fileContent.replace('const PORT = 3001', `const PORT = ${TEST_PORT}`);
+      
+      // Write the modified content back to the file
+      const fs = require('fs');
+      await fs.promises.writeFile('app.test.js', modifiedContent);
+      
+      // Start the test server
+      server = require('child_process').spawn('node', ['app.test.js'], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      
+      // Give the server time to start
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Reset and define all nock mocks
+      nock.cleanAll();
+    } catch (error) {
+      console.error('Error setting up test server:', error);
+      throw error;
+    }
   }, 10000); // Increase timeout for server startup
 
   afterAll(async () => {
     // Kill the test server and clean up
-    if (server && server.pid) {
-      process.kill(-server.pid);
+    try {
+      if (server && server.pid) {
+        // Use different kill approach based on platform
+        if (process.platform === 'win32') {
+          // Windows
+          exec(`taskkill /pid ${server.pid} /T /F`);
+        } else {
+          // Unix/Linux/macOS
+          process.kill(-server.pid);
+        }
+      }
+
+      // Clean up the temporary test file
+      const fs = require('fs');
+      if (fs.existsSync('app.test.js')) {
+        await fs.promises.unlink('app.test.js');
+      }
+
+      // Clean up nock mocks
+      nock.cleanAll();
+      nock.enableNetConnect();
+    } catch (error) {
+      console.error('Error cleaning up after tests:', error);
     }
-    await execAsync('rm app.test.js');
-    nock.cleanAll();
-    nock.enableNetConnect();
   });
 
   test('Should replace Yale with Fale in fetched content', async () => {
