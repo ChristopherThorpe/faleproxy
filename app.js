@@ -4,7 +4,7 @@ const cheerio = require('cheerio');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 
 // Middleware to parse request bodies
 app.use(express.json());
@@ -30,32 +30,9 @@ app.post('/fetch', async (req, res) => {
       url = 'http://' + url;
     }
 
-    // Log the URL being requested
-    console.log('Original URL:', url);
-    console.log('Normalized URL:', url);
-    console.log('Making request to:', url);
-    
-    let html;
-    if (process.env.NODE_ENV === 'test' && url === 'http://example.com/') {
-      // Use mock data in test mode
-      html = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Yale University Test Page</title>
-          </head>
-          <body>
-            <h1>Welcome to Yale University</h1>
-            <p>Yale University is a private research university.</p>
-            <a href="https://yale.edu">About Yale</a>
-          </body>
-        </html>
-      `;
-    } else {
-      // Fetch the content from the provided URL
-      const response = await axios.get(url);
-      html = response.data;
-    }
+    // Fetch the content from the provided URL
+    const response = await axios.get(url);
+    const html = response.data;
 
     // Use cheerio to parse HTML and selectively replace text content, not URLs
     const $ = cheerio.load(html);
@@ -105,7 +82,7 @@ app.post('/fetch', async (req, res) => {
   }
 });
 
-// Start the server (only in non-serverless environments)
+// Start the server
 function startServer(customPort) {
   const serverPort = customPort || PORT;
   const server = app.listen(serverPort, () => {
@@ -121,15 +98,12 @@ function stopServer(server) {
   }
 }
 
-// Export the app for serverless environments and testing
+// Export the app and server functions
 module.exports = app;
-
-// Also export server functions for testing
 module.exports.startServer = startServer;
 module.exports.stopServer = stopServer;
 
+// Start the server only if this file is run directly
 if (require.main === module) {
   startServer();
 }
-
-module.exports = { app, startServer, stopServer };
