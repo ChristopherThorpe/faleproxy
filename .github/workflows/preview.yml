@@ -30,7 +30,14 @@ jobs:
     - name: Run tests
       id: run_tests
       run: npm run test:ci
+      # Allow preview deployment even if tests fail, but mark the step as failed
       continue-on-error: true
+      
+    - name: Check test status
+      if: steps.run_tests.outcome == 'failure'
+      run: |
+        echo "::warning::Tests failed but continuing with preview deployment"
+        echo "Tests failed - this preview deployment may have issues" >> $GITHUB_STEP_SUMMARY
 
   deploy-preview:
     needs: test
