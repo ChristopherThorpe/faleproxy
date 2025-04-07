@@ -104,7 +104,10 @@ describe('API Endpoints', () => {
 
   test('POST /fetch should handle errors from external sites', async () => {
     // Mock a failing URL
-    nock('https://error-site.com')
+    nock('https://example.com')
+      .get('/')
+      .reply(200, sampleHtmlWithYale);
+    nock('http://not-a-valid-url')
       .get('/')
       .replyWithError('Connection refused');
 

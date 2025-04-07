@@ -106,6 +106,25 @@ app.post('/fetch', async (req, res) => {
 });
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Faleproxy server running at http://localhost:${PORT}`);
-});
+function startServer(customPort) {
+  const serverPort = customPort || PORT;
+  const server = app.listen(serverPort, () => {
+    console.log(`Server is running on port ${serverPort}`);
+  });
+  return server;
+}
+
+function stopServer(server) {
+  return new Promise((resolve, reject) => {
+    server.close((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, startServer, stopServer };

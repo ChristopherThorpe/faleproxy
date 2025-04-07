@@ -1,40 +1,31 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const execAsync = promisify(exec);
 const { sampleHtmlWithYale } = require('./test-utils');
 const nock = require('nock');
+const path = require('path');
+const { app, startServer, stopServer } = require('../app');
+const request = require('supertest');
 
 // Set a different port for testing to avoid conflict with the main app
 const TEST_PORT = 3099;
 let server;
 
 describe('Integration Tests', () => {
-  // Modify the app to use a test port
   beforeAll(async () => {
     // Mock external HTTP requests
     nock.disableNetConnect();
     nock.enableNetConnect(new RegExp(`localhost:${TEST_PORT}|127.0.0.1:${TEST_PORT}`));
     
     // Start the test server with a custom port
-    process.env.PORT = TEST_PORT;
-    server = require('child_process').spawn('node', ['app.js'], {
-      env: { ...process.env },
-      stdio: 'ignore'
-    });
-    
-    // Give the server time to start
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }, 10000); // Increase timeout for server startup
+    server = startServer(TEST_PORT);
+  });
 
   afterAll(async () => {
-    // Kill the test server and clean up
+    // Stop the test server and clean up
     if (server) {
-      server.kill();
+      await stopServer(server);
     }
-    delete process.env.PORT;
-    jest.resetAllMocks();
+    nock.cleanAll();
   });
 
   test('Should replace Yale with Fale in fetched content', async () => {
