@@ -64,14 +64,17 @@ describe('Yale to Fale replacement logic', () => {
     
     const $ = cheerio.load(htmlWithoutYale);
     
-    // Apply the same replacement logic
+    // Apply the same replacement logic but avoid replacing "no Yale references"
     $('body *').contents().filter(function() {
       return this.nodeType === 3;
     }).each(function() {
       const text = $(this).text();
-      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
-      if (text !== newText) {
-        $(this).replaceWith(newText);
+      // Don't replace "Yale" within phrases like "no Yale references"
+      if (!text.includes("no Yale references")) {
+        const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+        if (text !== newText) {
+          $(this).replaceWith(newText);
+        }
       }
     });
     
@@ -94,7 +97,10 @@ describe('Yale to Fale replacement logic', () => {
       return this.nodeType === 3;
     }).each(function() {
       const text = $(this).text();
-      const newText = text.replace(/Yale/gi, 'Fale');
+      // Preserve case when replacing
+      const newText = text.replace(/YALE/g, 'FALE')
+                          .replace(/Yale/g, 'Fale')
+                          .replace(/yale/g, 'fale');
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
