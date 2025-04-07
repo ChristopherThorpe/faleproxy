@@ -32,6 +32,9 @@ app.post('/fetch', async (req, res) => {
     // Use cheerio to parse HTML and selectively replace text content, not URLs
     const $ = cheerio.load(html);
     
+    // Keep track of replacements
+    let replacementCount = 0;
+    
     // Function to replace text but skip URLs and attributes
     function replaceYaleWithFale(i, el) {
       if ($(el).children().length === 0 || $(el).text().trim() !== '') {
@@ -41,7 +44,16 @@ app.post('/fetch', async (req, res) => {
         // Only process if it's a text node
         if (content && $(el).children().length === 0) {
           // Replace Yale with Fale in text content only
-          content = content.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+          content = content.replace(/Yale/g, (match) => {
+            replacementCount++;
+            return 'Fale';
+          }).replace(/YALE/g, (match) => {
+            replacementCount++;
+            return 'FALE';
+          }).replace(/yale/g, (match) => {
+            replacementCount++;
+            return 'fale';
+          });
           $(el).html(content);
         }
       }
@@ -53,21 +65,44 @@ app.post('/fetch', async (req, res) => {
     }).each(function() {
       // Replace text content but not in URLs or attributes
       const text = $(this).text();
-      const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+      // Using case-preserving replacements with regular expressions
+      const newText = text.replace(/Yale/g, (match) => {
+        replacementCount++;
+        return 'Fale';
+      }).replace(/YALE/g, (match) => {
+        replacementCount++;
+        return 'FALE';
+      }).replace(/yale/g, (match) => {
+        replacementCount++;
+        return 'fale';
+      });
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
     });
     
     // Process title separately
-    const title = $('title').text().replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
+    const title = $('title').text()
+                 .replace(/Yale/g, (match) => {
+                   replacementCount++;
+                   return 'Fale';
+                 })
+                 .replace(/YALE/g, (match) => {
+                   replacementCount++;
+                   return 'FALE';
+                 })
+                 .replace(/yale/g, (match) => {
+                   replacementCount++;
+                   return 'fale';
+                 });
     $('title').text(title);
     
     return res.json({ 
       success: true, 
       content: $.html(),
       title: title,
-      originalUrl: url
+      originalUrl: url,
+      replacementCount: replacementCount
     });
   } catch (error) {
     console.error('Error fetching URL:', error.message);
@@ -80,4 +115,14 @@ app.post('/fetch', async (req, res) => {
 // Start the server
 app.listen(PORT, () => {
   console.log(`Faleproxy server running at http://localhost:${PORT}`);
+}).on('error', (e) => {
+  if (e.code === 'EADDRINUSE') {
+    const newPort = PORT + 1;
+    console.log(`Port ${PORT} is in use, attempting to use port ${newPort} instead...`);
+    app.listen(newPort, () => {
+      console.log(`Faleproxy server running at http://localhost:${newPort}`);
+    });
+  } else {
+    console.error('Failed to start server:', e.message);
+  }
 });
