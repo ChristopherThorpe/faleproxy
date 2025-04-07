@@ -32,13 +32,6 @@ jobs:
       run: npm run test:ci
       continue-on-error: true
 
-    - name: Upload coverage report
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: coverage-report
-        path: coverage/
-
   deploy-preview:
     needs: test
     runs-on: ubuntu-latest
