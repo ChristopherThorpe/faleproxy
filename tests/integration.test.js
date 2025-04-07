@@ -15,15 +15,12 @@ describe('Integration Tests', () => {
   beforeAll(async () => {
     // Mock external HTTP requests
     nock.disableNetConnect();
-    nock.enableNetConnect('127.0.0.1');
+    nock.enableNetConnect(new RegExp(`localhost:${TEST_PORT}|127.0.0.1:${TEST_PORT}`));
     
-    // Create a temporary test app file
-    await execAsync('cp app.js app.test.js');
-    await execAsync(`sed -i '' 's/const PORT = 3001/const PORT = ${TEST_PORT}/' app.test.js`);
-    
-    // Start the test server
-    server = require('child_process').spawn('node', ['app.test.js'], {
-      detached: true,
+    // Start the test server with a custom port
+    process.env.PORT = TEST_PORT;
+    server = require('child_process').spawn('node', ['app.js'], {
+      env: { ...process.env },
       stdio: 'ignore'
     });
     
@@ -33,23 +30,34 @@ describe('Integration Tests', () => {
 
   afterAll(async () => {
     // Kill the test server and clean up
-    if (server && server.pid) {
-      process.kill(-server.pid);
+    if (server) {
+      server.kill();
     }
-    await execAsync('rm app.test.js');
-    nock.cleanAll();
-    nock.enableNetConnect();
+    delete process.env.PORT;
+    jest.resetAllMocks();
   });
 
   test('Should replace Yale with Fale in fetched content', async () => {
-    // Setup mock for example.com
-    nock('https://example.com')
+    // Mock the external website response
+    nock('http://example.com')
       .get('/')
-      .reply(200, sampleHtmlWithYale);
-    
+      .reply(200, `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Yale University Test Page</title>
+          </head>
+          <body>
+            <h1>Welcome to Yale University</h1>
+            <p>Yale University is a private research university.</p>
+            <a href="https://yale.edu">About Yale</a>
+          </body>
+        </html>
+      `);
+
     // Make a request to our proxy app
     const response = await axios.post(`http://localhost:${TEST_PORT}/fetch`, {
-      url: 'https://example.com/'
+      url: 'http://example.com/'
     });
     
     expect(response.status).toBe(200);
@@ -59,7 +67,7 @@ describe('Integration Tests', () => {
     const $ = cheerio.load(response.data.content);
     expect($('title').text()).toBe('Fale University Test Page');
     expect($('h1').text()).toBe('Welcome to Fale University');
-    expect($('p').first().text()).toContain('Fale University is a private');
+    expect($('p').text()).toBe('Fale University is a private research university.');
     
     // Verify URLs remain unchanged
     const links = $('a');
@@ -84,7 +92,7 @@ describe('Integration Tests', () => {
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
-      expect(error.response.status).toBe(500);
+      expect(error.response?.status || error.status).toBe(500);
     }
   });
 
@@ -94,8 +102,8 @@ describe('Integration Tests', () => {
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
-      expect(error.response.status).toBe(400);
-      expect(error.response.data.error).toBe('URL is required');
+      expect(error.response?.status || error.status).toBe(400);
+      expect(error.response?.data?.error || error.message).toBe('URL is required');
     }
   });
 });
