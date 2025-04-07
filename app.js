@@ -105,7 +105,7 @@ app.post('/fetch', async (req, res) => {
   }
 });
 
-// Start the server
+// Start the server (only in non-serverless environments)
 function startServer(customPort) {
   const serverPort = customPort || PORT;
   const server = app.listen(serverPort, () => {
@@ -114,14 +114,19 @@ function startServer(customPort) {
   return server;
 }
 
+// Stop the server
 function stopServer(server) {
-  return new Promise((resolve, reject) => {
-    server.close((err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
+  if (server) {
+    server.close();
+  }
 }
+
+// Export the app for serverless environments and testing
+module.exports = app;
+
+// Also export server functions for testing
+module.exports.startServer = startServer;
+module.exports.stopServer = stopServer;
 
 if (require.main === module) {
   startServer();
