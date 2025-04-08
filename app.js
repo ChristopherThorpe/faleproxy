@@ -71,7 +71,10 @@ app.post('/fetch', async (req, res) => {
       originalUrl: url
     });
   } catch (error) {
-    console.error('Error fetching URL:', error.message);
+    // Only log errors when not in a test environment
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Error fetching URL:', error.message);
+    }
     return res.status(500).json({ 
       error: `Failed to fetch content: ${error.message}` 
     });
