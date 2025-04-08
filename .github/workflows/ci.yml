@@ -36,6 +36,7 @@ jobs:
     # Run production only on main/master and only if tests succeed
     if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
     runs-on: ubuntu-latest
+    environment: Production
     steps:
       - uses: actions/checkout@v3
       
@@ -80,6 +81,7 @@ jobs:
     # We choose option (b): preview deployments will run regardless of test status.
     if: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' }}
     runs-on: ubuntu-latest
+    environment: Preview
     steps:
       - uses: actions/checkout@v3
       
