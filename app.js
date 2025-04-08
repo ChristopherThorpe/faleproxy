@@ -3,6 +3,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const path = require('path');
 
+// Create the Express application
 const app = express();
 const PORT = 3001;
 
@@ -77,7 +78,12 @@ app.post('/fetch', async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Faleproxy server running at http://localhost:${PORT}`);
-});
+// Only start the server if this file is run directly (not required/imported)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Faleproxy server running at http://localhost:${PORT}`);
+  });
+}
+
+// Export the app for testing
+module.exports = app;
