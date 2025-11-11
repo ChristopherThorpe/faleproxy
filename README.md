@@ -88,3 +88,7 @@ To enable automatic deployments to Vercel, you need to:
 - Cheerio - HTML parsing and manipulation
 - Vanilla JavaScript for frontend functionality
 - Jest, Supertest, and Nock for testing
+
+## HW8 CI/CD Test
+
+HW8: CI preview test - This change triggers GitHub Actions CI and Vercel preview deployment.
