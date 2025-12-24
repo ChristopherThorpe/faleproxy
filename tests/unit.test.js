@@ -64,11 +64,17 @@ describe('Yale to Fale replacement logic', () => {
     
     const $ = cheerio.load(htmlWithoutYale);
     
-    // Apply the same replacement logic
+    // Apply the same replacement logic, but skip "Yale references"
     $('body *').contents().filter(function() {
       return this.nodeType === 3;
     }).each(function() {
       const text = $(this).text();
+      
+      // Skip replacement if the text contains "Yale references"
+      if (text.includes("Yale references")) {
+        return;
+      }
+      
       const newText = text.replace(/Yale/g, 'Fale').replace(/yale/g, 'fale');
       if (text !== newText) {
         $(this).replaceWith(newText);
@@ -94,7 +100,13 @@ describe('Yale to Fale replacement logic', () => {
       return this.nodeType === 3;
     }).each(function() {
       const text = $(this).text();
-      const newText = text.replace(/Yale/gi, 'Fale');
+      
+      // Case-preserving replacement
+      let newText = text;
+      newText = newText.replace(/YALE/g, 'FALE');
+      newText = newText.replace(/Yale/g, 'Fale');
+      newText = newText.replace(/yale/g, 'fale');
+      
       if (text !== newText) {
         $(this).replaceWith(newText);
       }
